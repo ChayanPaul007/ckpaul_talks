@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Safe, Compliant and Adaptive Control for Robots that Interact — C. K. Paul</title>
+<link rel="stylesheet" href="../vendor/reveal/reset.css">
+<link rel="stylesheet" href="../vendor/reveal/reveal.css">
+<link rel="stylesheet" href="../vendor/katex/katex.min.css">
+<link rel="stylesheet" href="css/theme.css">
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+
+<!-- ============================ TITLE ============================ -->
+<section data-background-color="#16294A" data-nofooter>
+  <div class="dark" style="display:grid;grid-template-columns:1.05fr .95fr;height:100%;align-items:center;">
+    <div>
+      <div class="kicker">Postdoctoral interview · Control &amp; Instrumentation Engineering · KFUPM</div>
+      <h1 style="margin-top:34px;">Safe, Compliant and Adaptive Control for Robots that Interact</h1>
+      <div class="goldrule"></div>
+      <div class="who">Chayan Kumar Paul</div>
+      <div class="aff">Research Associate, FOCAS Lab<br>Robert Bosch Centre for Cyber-Physical Systems, IISc Bangalore</div>
+      <div class="date">4 November 2026</div>
+    </div>
+    <div id="fig-title" style="height:100%;"></div>
+  </div>
+  <aside class="notes">Thank the panel. One-sentence pitch: I design controllers that let robots yield to people while provably never violating safety, with explicit time guarantees. (~20 s)</aside>
+</section>
+
+<!-- ============================ BACKGROUND ============================ -->
+<section class="center-y">
+  <div class="kicker">Profile</div>
+  <h2>Background</h2>
+  <div class="cols c2" style="gap:70px;">
+    <div class="stack">
+      <div style="display:grid;grid-template-columns:150px 1fr;gap:16px;">
+        <span class="label">Current</span>
+        <div><strong>Research Associate, FOCAS Lab</strong><br><span class="small">Robert Bosch Centre for Cyber-Physical Systems, IISc Bangalore</span><br><span class="small muted">With Dr. Pushpak Jagtap: spatiotemporal tubes and funnel-based interaction control</span></div>
+      </div>
+      <div style="display:grid;grid-template-columns:150px 1fr;gap:16px;">
+        <span class="label">PhD, 2026</span>
+        <div><strong>Electrical Engineering, IIT Delhi</strong><br><span class="small"><em>Safe and Compliant Adaptive Control Strategies for Human–Robot Interaction</em></span><br><span class="small muted">Advisor: Prof. Indra Narayan Kar</span></div>
+      </div>
+    </div>
+    <div class="key">
+      <span class="label">Research question</span>
+      <p class="quote">How can a robot yield to people and to uncertain environments while provably never violating safety — with limited model knowledge and explicit time guarantees?</p>
+    </div>
+  </div>
+  <div class="stats">
+    <div><span class="n">2</span><span class="t">journal articles<br>(IJSS, IJHCI)</span></div>
+    <div><span class="n">4</span><span class="t">manuscripts<br>under review</span></div>
+    <div><span class="n">1</span><span class="t">IEEE conference<br>paper (CoDIT)</span></div>
+    <div><span class="n">2</span><span class="t">controllers validated<br>on hardware</span></div>
+  </div>
+  <aside class="notes">PhD at IIT Delhi (defended July 2026), now RA at FOCAS Lab, IISc. Read the research question; skim the numbers. (~50 s)</aside>
+</section>
+
+<!-- ============================ THEME ============================ -->
+<section class="center-y">
+  <div class="kicker">Research theme</div>
+  <h2>Interaction that is safe by construction</h2>
+  <div class="cols c3" style="margin-top:30px;">
+    <div class="fragment"><div class="rule"></div><div class="num">01</div><h3 style="margin-top:8px;">Learn</h3>
+      <p class="small">Identify unknown parameters <strong>in fixed time</strong>, from initial rather than persistent excitation.</p>
+      <p class="xsmall muted"><em>Certificate:</em> explicit settling-time bound $\mathcal{T}_{\max}$</p></div>
+    <div class="fragment"><div class="rule"></div><div class="num">02</div><h3 style="margin-top:8px;">Constrain</h3>
+      <p class="small">Never leave the safe set — <strong>even while yielding</strong> to the human.</p>
+      <p class="xsmall muted"><em>Certificate:</em> forward invariance; recursive feasibility</p></div>
+    <div class="fragment"><div class="rule"></div><div class="num">03</div><h3 style="margin-top:8px;">Estimate</h3>
+      <p class="small">Reconstruct <strong>unmeasured states</strong>, treating the human force as an unknown input.</p>
+      <p class="xsmall muted"><em>Certificate:</em> contraction ⇒ exponential convergence</p></div>
+  </div>
+  <p class="quote center fragment" style="margin-top:70px;">Separate what must be guaranteed from what can be learned — and prove both.</p>
+  <aside class="notes">Three capabilities, each with a mathematical certificate. Ch. 3 & 5 = learn, Ch. 4 & 5 + STT = constrain, Ch. 6 = estimate. (~50 s)</aside>
+</section>
+
+<!-- ============================ PROBLEM ============================ -->
+<section>
+  <div class="kicker">Motivation</div>
+  <h2>Compliance and safety under uncertainty</h2>
+  <div class="cols c46">
+    <div class="stack">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <img src="figures/motiv_surgery.jpg" alt="Surgical robots" style="height:180px;object-fit:cover;width:100%;">
+        <img src="figures/motiv_warehouse.jpg" alt="Collaborative robot in a warehouse" style="height:180px;object-fit:cover;width:100%;">
+      </div>
+      <div class="panel">
+        <span class="label">Task-space dynamics and target impedance</span>
+        $$\begin{aligned} M_p(q)\ddot p + C_p(q,\dot q)\dot p + G_p(q) &= J^{\dagger\top}(q)\,\tau + f_{ext}\\ M\ddot e + D\dot e + K e &= f_{ext},\qquad e = p-p_d \end{aligned}$$
+      </div>
+    </div>
+    <div>
+      <table class="cmp">
+        <tr><th></th><th>Model-free</th><th>Parameter<br>convergence</th><th>Explicit<br>time</th><th>Hard<br>safety</th></tr>
+        <tr><td>Classical impedance</td><td class="no">×</td><td class="na">–</td><td class="na">–</td><td class="no">×</td></tr>
+        <tr><td>Adaptive impedance</td><td class="yes">✓</td><td>PE only</td><td class="no">×</td><td class="no">×</td></tr>
+        <tr><td>Invariance control</td><td class="no">×</td><td class="na">–</td><td class="na">–</td><td class="yes">✓</td></tr>
+        <tr><td>CBF / MPC based</td><td class="no">×</td><td class="na">–</td><td class="na">–</td><td class="yes">✓</td></tr>
+        <tr><td>BLF / PPC admittance</td><td class="yes">✓</td><td class="no">×</td><td class="no">×</td><td class="yes">✓<sup>†</sup></td></tr>
+        <tr class="ours fragment"><td>This work</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td></tr>
+      </table>
+      <p class="xsmall muted" style="margin-top:6px;">† conservative: bounds tied to the barrier construction rather than the task. “Model-free”: unknown parameters with known regressor structure.</p>
+    </div>
+  </div>
+  <div class="key fragment" style="margin-top:22px;"><strong>The gap.</strong> No single framework delivered compliance, parameter convergence in bounded time and hard state constraints — together, under model uncertainty and disturbances.</div>
+  <aside class="notes">Exact cancellation needs M_p, C_p, G_p; hard limits on position/velocity; full state and force rarely measured. Reveal "this work" row, then the gap. (~1 min)</aside>
+</section>
+
+<!-- ============================ C1 ============================ -->
+<section>
+  <div class="kicker">PhD research · 1 of 4</div>
+  <h2>Fixed-time adaptive impedance control</h2>
+  <div class="cols c2">
+    <div class="stack">
+      <div class="panel">
+        <span class="label">Design</span>
+        $$\begin{aligned}
+        M(\dot v+\lambda v)&=M\ddot e+D\dot e+Ke-f_{ext}\\
+        \tau&=J^{\top}\!\big(\Phi\hat\Theta-f_{ext}-k_1\lceil v\rfloor^{1-\alpha}-k_2\lceil v\rfloor^{1+\alpha}\big)\\
+        \dot{\hat\Theta}&=\Gamma\Phi^{\top}v+\Gamma\textstyle\sum_{j\in\{F,IF\}}\big(\lceil\varepsilon_j\rfloor^{1-\alpha}+\lceil\varepsilon_j\rfloor^{1+\alpha}\big)
+        \end{aligned}$$
+        <p class="xsmall muted" style="margin:0;">$\lceil x\rfloor^{a}=|x|^{a}\operatorname{sign}(x)$ elementwise, $\alpha\in(0,1)$; $\varepsilon_j$: prediction errors of filtered regressors.</p>
+      </div>
+      <div class="key fragment">
+        <strong>Theorem.</strong> If the filtered regressor is initially exciting on $[0,\epsilon]$, then for every initial condition
+        $$v(t)=0,\quad \tilde\Theta(t)=0\qquad \forall\,t\ge \mathcal{T}_{\max}=\epsilon+\frac{\pi}{\alpha\sqrt{\gamma_3\gamma_4}}.$$
+      </div>
+      <p class="venue">Submitted to Int. J. Adaptive Control and Signal Processing — with D. Efimov and R. Ushirobira (Inria)</p>
+    </div>
+    <div class="stack">
+      <div id="fig-peie"></div>
+      <div class="fragment">
+        <img src="figures/plot_c1_params.svg" alt="Parameter estimates" style="width:88%;margin:0 auto;">
+        <p class="caption">Two-link simulation: all five estimates settle well inside $\mathcal{T}_{\max}=12.3$ s.<br>Hardware (Quanser SRV02): $\mathcal{T}_{\max}=39.7$ s, smooth and bounded input.</p>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">Impedance filter turns the target relation into regulation of v. Key point: initial, not persistent, excitation — realistic for contact tasks. Bound independent of initial conditions given the excitation level. (~1:45)</aside>
+</section>
+
+<!-- ============================ C2 ============================ -->
+<section>
+  <div class="kicker">PhD research · 2 of 4</div>
+  <h2>Safety in admittance control by reference shaping</h2>
+  <div class="cols c2">
+    <div class="stack">
+      <div id="fig-refshape"></div>
+      <div class="panel fragment" data-fragment-index="3">
+        <span class="label">Switched reference model and invariance function</span>
+        $$\dot E_r = A_{\sigma}E_r+B_a f_{ext},\qquad \sigma\in\{\text{compliant},\,\text{stiff}\}$$
+        $$\Phi(E_r)=\begin{cases} h, & \dot h\le 0\\[2pt] h+\dfrac{\dot h^{2}}{2\gamma}, & \text{otherwise}\end{cases}\qquad \mathcal{G}_1\oplus\mathcal{D}\subseteq\mathcal{S}_r$$
+        <p class="xsmall muted" style="margin:0;">Safe set $\{h\le 0\}$; $\Phi\le0$ ⇔ the braking distance at deceleration $\gamma$ fits before the boundary. $\mathcal{G}_1=\{\Phi\le 0\}$ invariant; MRAC error bound $\mathcal D$.</p>
+      </div>
+    </div>
+    <div class="stack">
+      <img src="figures/hw_srv02_admittance.jpg" alt="Quanser SRV02 hardware" style="width:90%;margin:0 auto;">
+      <img src="figures/plot_c2_track.svg" alt="Hardware tracking with limits" style="width:82%;margin:0 auto;">
+      <p class="caption">Hardware: the operator pushes the link both ways ($|f_{ext}|\lesssim2$ N);<br>the link complies but never crosses the limits.</p>
+      <p class="venue" style="text-align:right;">Int. J. Human–Computer Interaction (2026) · IEEE CoDIT (2024)</p>
+    </div>
+  </div>
+  <aside class="notes">Click 1: naive admittance crosses the boundary. Click 2: shaped reference stiffens before Φ reaches 0. Click 3: the math. No barrier terms in the control law. Note: Φ uses +ḣ²/2γ (braking distance). (~1:30)</aside>
+</section>
+
+<!-- ============================ C3 ============================ -->
+<section>
+  <div class="kicker">PhD research · 3 of 4</div>
+  <h2>Fixed-time adaptation with tube MPC</h2>
+  <div class="cols c64">
+    <div class="stack">
+      <div id="fig-tubempc"></div>
+      <p class="venue">In revision, IEEE Transactions on Automation Science and Engineering</p>
+    </div>
+    <div class="stack">
+      <img src="figures/plot_c3_wall.svg" alt="Impedance along X with a wall" style="width:92%;margin:0 auto;">
+      <img src="figures/plot_c3_y.svg" alt="Tracking along Y" style="width:92%;margin:0 auto;">
+      <p class="caption">Simultaneously: compliant contact with a wall along $X$ (top) and accurate tracking along $Y$, with the $Y$-channel constraint enforced (bottom).</p>
+    </div>
+  </div>
+  <aside class="notes">Contact direction: fixed-time impedance. Other directions: tube MPC on a linear prediction model (A_d = e^{-λT_s} I). Click: after T_max the parametric part of the disturbance set vanishes, so the tube shrinks — less conservative. Recursive feasibility via shifted sequence. (~1:30)</aside>
+</section>
+
+<!-- ============================ C4 ============================ -->
+<section>
+  <div class="kicker">PhD research · 4 of 4</div>
+  <h2>Unknown-input dynamic observer via contraction</h2>
+  <div class="cols c334">
+    <div class="stack">
+      <img src="figures/flexible_joint.jpg" alt="Flexible joint">
+      <p class="small muted">Flexible joints give inherent compliance, but link-side states are hard to measure and the human force is unknown.</p>
+    </div>
+    <div class="stack">
+      <div class="panel"><span class="label">System and annihilator</span>
+        $$\begin{aligned}\dot x&=Ax+g(y,u)+\phi(x)+Fd,\quad y=Cx\\ TF&=0\ \Rightarrow\ T\dot x=TAx+Tg+T\phi(x)\end{aligned}$$</div>
+      <div class="panel"><span class="label">Dynamic observer</span>
+        $$\begin{aligned}\dot z&=Pz+Qy+Tg+T\phi(\hat x)+R\upsilon\\ \dot\upsilon&=Xz+Yy+S\upsilon,\qquad \hat x=Wz+Zy\end{aligned}$$</div>
+      <div class="key small fragment">Exists iff $\operatorname{rank}\begin{bmatrix}T\\ C\end{bmatrix}=n$. Contraction of a virtual system, certified by an LMI, gives exponential convergence for any initial estimate.</div>
+    </div>
+    <div class="stack">
+      <img src="figures/plot_c4_err.svg" alt="Estimation error" style="width:100%;">
+      <img src="figures/plot_c4_state.svg" alt="State comparison" style="width:100%;">
+      <p class="caption">Error within an exponential envelope; faster than a proportional UI observer (simulation).</p>
+      <p class="venue">Int. J. Systems Science (2025)</p>
+    </div>
+  </div>
+  <aside class="notes">Extra observer states (X,Y,S) enlarge the LMI feasible set; proportional / PI observers are special cases. (~1 min)</aside>
+</section>
+
+<!-- ============================ STT ============================ -->
+<section>
+  <div class="kicker">Current work · FOCAS Lab, IISc</div>
+  <h2>Spatiotemporal tubes for safe task-space control</h2>
+  <div class="cols" style="grid-template-columns:1.6fr .9fr;gap:30px;align-items:center;">
+    <div id="fig-stt-t"></div>
+    <div id="fig-stt-w"></div>
+  </div>
+  <div class="key" style="margin-top:14px;"><strong>Idea.</strong> Shape a tube $\Gamma(t)=\{p:\gamma_L(t)&lt;p&lt;\gamma_U(t)\}$ with $\Gamma(t)\cap\big(\mathcal{O}(t)\cup\mathcal{S}_{\mathrm{sing}}\big)=\emptyset$; a closed-form, approximation-free law keeps $p(t)\in\Gamma(t)$ for all $t$ — no model learning, no online optimization.</div>
+  <aside class="notes">Animation: the time cursor and the arm move together; the tube excludes the moving obstacle and the near-singular band (stretched/folded arm). Concept-level only — under double-blind review. (~1:20)</aside>
+</section>
+
+<!-- ============================ FUNNEL ============================ -->
+<section>
+  <div class="kicker">Current work · FOCAS Lab, IISc</div>
+  <h2>Funnel-based interaction control</h2>
+  <div class="cols c64">
+    <div id="fig-funnel"></div>
+    <div class="stack">
+      <div class="panel"><span class="label">Idea</span>
+        <p class="small">Keep the interaction error inside a designed funnel, $\|e(t)\|<\varphi(t)$, with a low-complexity, model-free law</p>
+        $$u=-\frac{k}{1-\|e\|^{2}/\varphi(t)^{2}}\;e$$
+        <p class="xsmall muted" style="margin:0;">Performance by design; no parameter estimation; the gain rises only near the funnel boundary.</p>
+      </div>
+      <div><span class="label">Also in progress</span><p class="small">Observer-based fixed-time nested sliding-mode control of a flexible-link manipulator (with IIT Delhi).</p></div>
+    </div>
+  </div>
+  <div class="key" style="margin-top:16px;">The same tube and funnel geometry gives <strong>safety</strong> (spatiotemporal tubes) and <strong>prescribed interaction performance</strong> (funnels); fixed-time tools give the <strong>timing certificates</strong>.</div>
+  <aside class="notes">Funnel bounds a tracking/interaction error; STT bounds the state directly. Both closed-form. (~1 min)</aside>
+</section>
+
+<!-- ============================ PUBLICATIONS ============================ -->
+<section>
+  <div class="kicker">Track record</div>
+  <h2>Publications</h2>
+  <div class="cols" style="grid-template-columns:1.55fr .7fr;gap:50px;">
+    <div class="pubs">
+      <span class="label">Journals</span>
+      <div class="row"><div><strong>C. K. Paul</strong>, I. N. Kar, S. Janardhanan. Unknown input dynamic observer for a class of nonlinear systems using contraction analysis. <em>Int. J. Systems Science</em>, 2025.</div><div class="st">Published</div></div>
+      <div class="row"><div><strong>C. K. Paul</strong>, B. S. Dey, I. N. Kar. Safety in admittance control using reference trajectory shaping. <em>Int. J. Human–Computer Interaction</em>, 2026.</div><div class="st">Accepted</div></div>
+      <div class="row"><div><strong>C. K. Paul</strong>, B. S. Dey, I. N. Kar. Safe physical human–robot interaction via fixed-time concurrent-learning impedance control. <em>IEEE T-ASE</em>.</div><div class="st">In revision</div></div>
+      <div class="row"><div><strong>C. K. Paul</strong>, K. Nath, I. N. Kar, D. Efimov, R. Ushirobira. Fixed-time adaptive impedance control with excitation-aware parameter estimation. <em>Int. J. Adapt. Control Signal Process.</em></div><div class="st">Submitted</div></div>
+      <div class="row"><div>A. Sharma, <strong>C. K. Paul</strong>, S. Janardhanan. Observer-based fixed-time nested sliding-mode control for tip-position regulation of a single-link flexible manipulator.</div><div class="st">Submitting</div></div>
+      <span class="label" style="margin-top:14px;">Conferences</span>
+      <div class="row"><div><strong>C. K. Paul</strong>, B. S. Dey, I. N. Kar. Safe human–robot interaction using switched model reference admittance control. <em>IEEE CoDIT</em>, Malta, 2024.</div><div class="st">Published</div></div>
+      <div class="row"><div>Two further manuscripts under double-blind review (IEEE RA-L, ICRA).</div><div class="st">Under review</div></div>
+    </div>
+    <div class="stack small">
+      <div><span class="label">Methods</span>Fixed-time stability, adaptive and concurrent learning, set invariance, tube MPC, contraction, sliding modes, funnels and tubes.</div>
+      <div><span class="label">Implementation</span>Real-time experiments on the Quanser SRV02; MATLAB/Simulink, Python, ROS 2, robot simulators.</div>
+      <div><span class="label">Collaboration</span>IIT Delhi, IISc Bangalore, Inria (France).</div>
+    </div>
+  </div>
+  <aside class="notes">Skim; do not read. (~30 s)</aside>
+</section>
+
+<!-- ============================ PLAN ============================ -->
+<section class="center-y">
+  <div class="kicker">Outlook</div>
+  <h2>Research plan at KFUPM CIE</h2>
+  <div class="cols c3">
+    <div class="fragment"><div class="rule"></div><div class="num" style="font-size:34px;">T1</div><h3 style="margin-top:6px;">Safe human–robot collaboration</h3>
+      <ul class="small"><li>Tube and funnel interaction control with fixed-time adaptation on cobot arms</li><li>Time-varying, unmodelled human dynamics</li></ul></div>
+    <div class="fragment"><div class="rule"></div><div class="num" style="font-size:34px;">T2</div><h3 style="margin-top:6px;">Observer-based and fault-tolerant safety</h3>
+      <ul class="small"><li>Safe interaction without force sensing or full state</li><li>Tubes that survive actuator faults; discrete-time guarantees</li></ul></div>
+    <div class="fragment"><div class="rule"></div><div class="num" style="font-size:34px;">T3</div><h3 style="margin-top:6px;">Safe multi-robot and aerial systems</h3>
+      <ul class="small"><li>Tubes for fleets and formations under communication limits</li><li>Aerial manipulation; links with CBF-based task allocation</li></ul></div>
+  </div>
+  <div class="tl fragment">
+    <div><b>Months 0–8</b>T1 on lab cobots; T2 theory; first journal submission</div>
+    <div><b>Months 8–16</b>T1 experiments; T3 in simulation; conference papers</div>
+    <div><b>Months 16–24</b>Integration and demonstrations; joint proposals; student co-supervision</div>
+  </div>
+  <aside class="notes">One theme, three thrusts building on each other. Align with the funding project — ask which one. (~1:30)</aside>
+</section>
+
+<!-- ============================ FIT ============================ -->
+<section class="center-y">
+  <div class="kicker">Outlook</div>
+  <h2>Fit with the department</h2>
+  <div id="fig-fit" style="margin-top:10px;"></div>
+  <div class="key" style="margin-top:20px;">I would bring certified safety and fixed-time learning for physical interaction, and connect them to the department's robotics, unmanned-systems and logistics projects.</div>
+  <aside class="notes">(~40 s)</aside>
+</section>
+
+<!-- ============================ THANK YOU + BACKUPS (down) ============================ -->
+<section>
+<section data-background-color="#16294A" data-nofooter>
+  <div class="dark" style="height:100%;display:flex;flex-direction:column;justify-content:center;">
+    <h1 style="font-size:84px;">Thank you</h1>
+    <div class="goldrule"></div>
+    <ul style="font-size:26px;max-width:1250px;">
+      <li>Compliant, provably safe interaction control with explicit settling-time certificates</li>
+      <li>Hardware-validated on a one-degree-of-freedom testbed; published and under review in leading journals</li>
+      <li>A 24-month plan on certified-safe autonomy around people, aligned with CIE research</li>
+    </ul>
+    <div class="date" style="margin-top:60px;">Chayan Kumar Paul · chayankumar1@iisc.ac.in &nbsp;&nbsp;|&nbsp;&nbsp; Backup slides: press ↓</div>
+  </div>
+</section>
+
+<section>
+  <div class="kicker">Backup A</div>
+  <h2>Stability notions and the fixed-time bound</h2>
+  <div class="cols c2">
+    <div><div id="fig-stab"></div><p class="caption">$\dot V=-4V$ · $\dot V=-2\sqrt V$ · $\dot V=-2\sqrt V-2V^{3/2}$ (log scale). Dashed: fixed-time from $V_0=500$, still settled before $\mathcal{T}_{\max}$.</p></div>
+    <div class="stack">
+      <div class="panel"><span class="label">Lemma (Polyakov, IEEE TAC 2012)</span>
+        <p class="small">If $\dot{\mathcal V}\le-\gamma_a\mathcal V^{1+p}-\gamma_b\mathcal V^{1-p}$ with $0&lt;p&lt;1$, the origin is fixed-time stable and</p>
+        $$\mathcal{T}(x_0)\le\mathcal{T}_{\max}=\frac{\pi}{2p\sqrt{\gamma_a\gamma_b}}.$$
+        <p class="xsmall muted" style="margin:0;">Proof idea: $w=\mathcal V^{p}$ gives $\dot w\le-p(\gamma_b+\gamma_a w^{2})$; the arctangent is bounded by $\pi/2$.</p></div>
+      <div class="panel"><span class="label">In my designs</span><p class="small" style="margin:0;">$\lceil\cdot\rfloor^{1-\alpha}$ acts near the origin, $\lceil\cdot\rfloor^{1+\alpha}$ far away. The right-hand side is continuous, so there is no sliding-mode chattering. A smaller $\mathcal{T}_{\max}$ requires larger $\Gamma,k_1,k_2$ and gives higher torque peaks.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="center-y">
+  <div class="kicker">Backup B</div>
+  <h2>Why initial excitation is enough</h2>
+  <div class="cols c2">
+    <div class="stack">
+      <div class="panel"><span class="label">Regressor filters (zero initial states)</span>
+        $$\begin{aligned} Z\Theta&=\tau_1\\ \dot Z_F&=-kZ_F+Z,\quad \dot\tau_{1F}=-k\tau_{1F}+\tau_1\\ \dot Z_{IF}&=-kZ_{IF}+Z_F^{\top}Z_F \end{aligned}$$</div>
+      <div class="key small">If IE holds on $[0,\epsilon]$, then $\lambda_{\min}(Z_{IF})\ge\mu>0$ on $[\epsilon,\epsilon_1]$ — long enough to converge before $\mathcal{T}_{\max}\le\epsilon_1$, after which $\tilde\Theta=0$ is invariant (disturbance-free case). With forgetting $k>0$ and no new excitation, $\lambda_{\min}(Z_{IF})$ eventually decays; hence the window.</div>
+    </div>
+    <div class="stack small">
+      <div><span class="label">Physical view</span>A contact task has a short transient followed by quasi-static contact: PE fails, IE holds.</div>
+      <div><span class="label">Practical check</span>Monitor $\lambda_{\min}(Z_{IF}(t))$ online; the certificate is active once it exceeds $\mu$.</div>
+      <div><span class="label">Special case</span>$\alpha=0$ recovers the classical asymptotic combined / concurrent-learning update.</div>
+    </div>
+  </div>
+</section>
+
+<section class="center-y">
+  <div class="kicker">Backup C</div>
+  <h2>Tube MPC: formulation, feasibility, computation</h2>
+  <div class="cols c2">
+    <div class="stack">
+      <div class="panel"><span class="label">Tube-MPC problem</span>
+        $$\begin{aligned}\min_{\bar u}\ &\textstyle\sum_{j=0}^{N-1}\big(\|\bar v_{k+j}\|_Q^2+\|\bar u_{k+j}\|_R^2\big)+\|\bar v_{k+N}\|_P^2\\
+        \text{s.t.}\ &\bar v_{k+j+1}=A_d\bar v_{k+j}+B_d\bar u_{k+j},\\ &\bar v_{k+j}\in\mathcal V\ominus\mathcal E_b,\quad \bar v_{k+N}\in\mathcal V_f,\\ &u_k=\bar u_k^{*}+K_d(v_k-\bar v_k),\quad A_d+B_dK_d\ \text{Schur}\end{aligned}$$</div>
+      <div class="panel"><span class="label">Guarantees</span><p class="small" style="margin:0;">Recursive feasibility via the shifted sequence; $J^{*}$ is a Lyapunov function, so $\bar v_k\to0$; the true state stays in $\bar v_k\oplus\mathcal E_b$, with $\mathcal E_b$ robust positively invariant.</p></div>
+    </div>
+    <div class="stack small">
+      <div><span class="label">Less conservative</span>The disturbance set has a parametric part that vanishes after $\mathcal{T}_{\max}$, so the tube can be recomputed smaller.</div>
+      <div><span class="label">Computation</span>$A_d=e^{-\lambda T_s}I$ with box constraints gives a small dense QP ($N=40$, $T_s=1$ ms). Terminal ingredients are computed offline.</div>
+      <div><span class="label">If the budget is tight</span>Explicit (multi-parametric) MPC, warm-started first-order solvers, or a shorter horizon with a larger terminal set.</div>
+    </div>
+  </div>
+</section>
+
+<section class="center-y">
+  <div class="kicker">Backup D</div>
+  <h2>Contraction and the observer design equations</h2>
+  <div class="cols c2">
+    <div class="panel"><span class="label">Contraction</span>
+      <p class="small">$\dot x=f(x,t)$ is contracting in a metric $\mathcal M(x,t)\succ0$ if</p>
+      $$\frac{\partial f}{\partial x}^{\!\top}\!\mathcal M+\dot{\mathcal M}+\mathcal M\frac{\partial f}{\partial x}\preceq-2\beta\mathcal M,\quad \beta>0.$$
+      <p class="small" style="margin:0;">All trajectories converge to each other exponentially. A virtual system with particular solutions $x$ and $\hat x$ then gives $\hat x\to x$.</p></div>
+    <div class="panel"><span class="label">Linear matrix equations</span>
+      $$PT-TA+QC=0,\quad XT+YC=0,\quad WT+ZC=I$$
+      <p class="small" style="margin:0;">Stack as $\Pi\Sigma=\Lambda$ with $\Pi=[P\ Q\ X\ Y\ W\ Z]$; solvable iff $\operatorname{rank}\begin{bmatrix}\Sigma\\ \Lambda\end{bmatrix}=\operatorname{rank}\Sigma$; general solution $\Pi=\Pi_0+\mathcal Z_1(I-\Sigma\Sigma^{\dagger})$. The free block $\mathcal Z_1$ is used to satisfy the convergence LMI at the vertices bounding the Jacobian of $\phi$.</p></div>
+  </div>
+</section>
+
+<section class="center-y">
+  <div class="kicker">Backup E</div>
+  <h2>Safety tools: how they compare</h2>
+  <table class="cmp left" style="font-size:20px;">
+    <tr><th>Method</th><th>Model needed</th><th>Online cost</th><th>Constraint type</th><th>Typical caveat</th></tr>
+    <tr><td>CBF–QP</td><td>control-affine model</td><td>QP each step</td><td>state set $h(x)\ge0$</td><td>feasibility under input limits; high relative degree</td></tr>
+    <tr><td>Barrier Lyapunov function</td><td>partial (backstepping)</td><td>closed form</td><td>error / state bounds</td><td>initial-condition requirements; design complexity</td></tr>
+    <tr><td>Prescribed performance / funnel</td><td>structural only</td><td>closed form</td><td>error envelope $\varphi(t)$</td><td>gain grows near the boundary; noise sensitivity</td></tr>
+    <tr><td>Spatiotemporal tubes</td><td>structural only</td><td>closed form</td><td>time-varying state tube</td><td>the tube must be designed (obstacle knowledge)</td></tr>
+    <tr><td>Tube MPC</td><td>nominal linear model</td><td>QP each step</td><td>state and input sets</td><td>computation; conservatism of the invariant set</td></tr>
+    <tr><td>Reference shaping (mine)</td><td>none in the safety layer</td><td>closed form</td><td>state set via $\Phi$</td><td>needs a good tracking loop; switching design</td></tr>
+  </table>
+</section>
+
+<section class="center-y">
+  <div class="kicker">Backup F</div>
+  <h2>Assumptions and limitations</h2>
+  <div class="cols c2">
+    <div><span class="label">Standing assumptions</span><ul class="small">
+      <li>Dynamics linear in the parameters (known regressor)</li>
+      <li>Interaction force measured; disturbances bounded with a known bound</li>
+      <li>Full state available in Ch. 3–5; safe set known, initial state inside it</li>
+      <li>Non-singular Jacobian along the task (now addressed with tubes)</li></ul></div>
+    <div><span class="label">Limitations and next steps</span><ul class="small">
+      <li>Hardware so far is single-DoF → multi-DoF cobot experiments</li>
+      <li>Ch. 5–6 validated in simulation → hardware</li>
+      <li>$\mathcal{T}_{\max}$ is a worst-case bound → tighter estimates</li>
+      <li>Continuous-time proofs → discrete-time guarantees</li>
+      <li>Observer and controller designed separately → observer-based safe interaction</li></ul></div>
+  </div>
+</section>
+</section>
+
+</div>
+</div>
+<div id="footer"><span>Chayan Kumar Paul · Postdoctoral interview, KFUPM</span><span></span></div>
+
+<script src="../vendor/katex/katex.min.js"></script>
+<script src="../vendor/katex/contrib/auto-render.min.js"></script>
+<script src="../vendor/reveal/reveal.js"></script>
+<script src="../vendor/reveal/plugin/notes/notes.js"></script>
+<script src="js/figures.js"></script>
+<script>
+  renderMathInElement(document.querySelector('.slides'), {
+    delimiters: [{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}],
+    throwOnError: false
+  });
+  const deck = new Reveal({
+    width: 1600, height: 900, margin: 0, minScale: 0.2, maxScale: 2.0,
+    hash: true, center: false, controls: false, progress: true,
+    slideNumber: 'h.v', pdfSeparateFragments: false, transition: 'fade', transitionSpeed: 'fast', backgroundTransition: 'fade',
+    plugins: [RevealNotes]
+  });
+  window.deck = deck; window.__figuresReady(deck);
+  deck.initialize();
+</script>
+</body>
+</html>

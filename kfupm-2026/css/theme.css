@@ -1,0 +1,122 @@
+/* =====================================================================
+   Meridian theme for reveal.js -- restrained, math-first academic style
+   Navy + muted gold on white; Source Serif 4 headings, Source Sans 3 body
+   ===================================================================== */
+@font-face{font-family:"Source Serif 4";font-weight:400;font-style:normal;src:url(../../vendor/fonts/source-serif-4-latin-400-normal.woff2) format("woff2");}
+@font-face{font-family:"Source Serif 4";font-weight:400;font-style:italic;src:url(../../vendor/fonts/source-serif-4-latin-400-italic.woff2) format("woff2");}
+@font-face{font-family:"Source Serif 4";font-weight:600;font-style:normal;src:url(../../vendor/fonts/source-serif-4-latin-600-normal.woff2) format("woff2");}
+@font-face{font-family:"Source Serif 4";font-weight:700;font-style:normal;src:url(../../vendor/fonts/source-serif-4-latin-700-normal.woff2) format("woff2");}
+@font-face{font-family:"Source Sans 3";font-weight:400;font-style:normal;src:url(../../vendor/fonts/source-sans-3-latin-400-normal.woff2) format("woff2");}
+@font-face{font-family:"Source Sans 3";font-weight:400;font-style:italic;src:url(../../vendor/fonts/source-sans-3-latin-400-italic.woff2) format("woff2");}
+@font-face{font-family:"Source Sans 3";font-weight:600;font-style:normal;src:url(../../vendor/fonts/source-sans-3-latin-600-normal.woff2) format("woff2");}
+@font-face{font-family:"Source Sans 3";font-weight:700;font-style:normal;src:url(../../vendor/fonts/source-sans-3-latin-700-normal.woff2) format("woff2");}
+
+:root{
+  --ink:#1C2430; --navy:#16294A; --blue:#3E5C8A; --gold:#B08A3E; --red:#A63D40;
+  --gray:#6B7280; --mid:#9AA3AF; --line:#D9DDE3; --panel:#F4F5F7;
+  --serif:"Source Serif 4",Georgia,serif; --sans:"Source Sans 3","Helvetica Neue",Arial,sans-serif;
+}
+.reveal-viewport{background:#fff;}
+.reveal{font-family:var(--sans);font-size:30px;color:var(--ink);}
+.reveal .slides{text-align:left;}
+.reveal .slides section{height:100%;box-sizing:border-box;padding:56px 72px 64px;}
+.reveal .slides section.center-y{display:flex!important;flex-direction:column;justify-content:center;}
+.reveal p{margin:0 0 .5em;line-height:1.38;}
+.reveal strong{font-weight:600;color:var(--navy);}
+.reveal em{font-style:italic;}
+.reveal a{color:var(--blue);}
+.reveal h1,.reveal h2,.reveal h3{font-family:var(--serif);color:var(--navy);text-transform:none;letter-spacing:0;font-weight:600;margin:0;}
+.reveal h2{font-size:44px;line-height:1.15;margin-bottom:28px;}
+.reveal h3{font-size:30px;margin-bottom:10px;}
+
+/* small label above a title */
+.kicker{font-family:var(--sans);font-size:15px;font-weight:700;letter-spacing:.14em;color:var(--gold);text-transform:uppercase;margin-bottom:8px;}
+.label{font-size:14px;font-weight:700;letter-spacing:.12em;color:var(--gray);text-transform:uppercase;margin-bottom:6px;display:block;}
+
+/* layout */
+.cols{display:grid;gap:44px;align-items:start;}
+.c2{grid-template-columns:1fr 1fr;} .c3{grid-template-columns:1fr 1fr 1fr;}
+.c46{grid-template-columns:.92fr 1.08fr;} .c64{grid-template-columns:1.12fr .88fr;}
+.c334{grid-template-columns:.8fr 1.05fr 1.05fr;}
+.stack>*+*{margin-top:22px;}
+.muted{color:var(--gray);} .small{font-size:22px;} .xsmall{font-size:18px;} .center{text-align:center;}
+
+/* panels */
+.panel{background:var(--panel);border-left:3px solid var(--navy);padding:16px 22px;}
+.key{border-left:3px solid var(--gold);padding:6px 0 6px 20px;}
+.venue{font-style:italic;color:var(--gray);font-size:20px;}
+.caption{color:var(--gray);font-size:18px;text-align:center;margin-top:6px;line-height:1.35;}
+.rule{height:2px;background:var(--navy);margin-bottom:14px;}
+.num{font-family:var(--serif);font-size:44px;color:var(--gold);line-height:1;}
+.quote{font-family:var(--serif);font-style:italic;font-size:30px;color:var(--navy);line-height:1.4;}
+.reveal img{max-width:100%;margin:0;display:block;}
+.fig{width:100%;}
+
+/* lists */
+.reveal ul{margin:0;padding:0;list-style:none;}
+.reveal ul li{position:relative;padding-left:24px;margin-bottom:10px;line-height:1.35;}
+.reveal ul li::before{content:"";position:absolute;left:2px;top:.58em;width:8px;height:8px;background:var(--gold);}
+
+/* table */
+.reveal table.cmp{border-collapse:collapse;width:100%;font-size:21px;}
+.reveal table.cmp th{font-weight:600;color:var(--gray);font-size:17px;padding:6px 8px;border-bottom:1.5px solid var(--navy);text-align:center;}
+.reveal table.cmp th:first-child,.reveal table.cmp td:first-child{text-align:left;}
+.reveal table.cmp td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:center;}
+.reveal table.cmp tr.ours td{font-weight:600;color:var(--navy);border-top:1.5px solid var(--navy);border-bottom:1.5px solid var(--navy);}
+.yes{color:var(--navy);} .no{color:var(--red);} .na{color:var(--mid);}
+
+/* publications */
+.pubs{font-size:19px;line-height:1.35;}
+.pubs .row{display:grid;grid-template-columns:1fr 150px;gap:16px;padding:7px 0;border-bottom:1px solid var(--line);}
+.pubs .st{font-size:13px;font-weight:700;letter-spacing:.1em;color:var(--gray);text-align:right;text-transform:uppercase;padding-top:3px;}
+
+/* timeline */
+.tl{display:grid;grid-template-columns:repeat(3,1fr);margin-top:34px;border-top:2px solid var(--line);}
+.tl>div{padding-top:12px;position:relative;font-size:19px;color:var(--gray);}
+.tl>div::before{content:"";position:absolute;top:-7px;left:0;width:12px;height:12px;border-radius:50%;background:var(--navy);}
+.tl>div:first-child{border-top:2px solid var(--navy);margin-top:-2px;}
+.tl b{display:block;color:var(--navy);font-size:20px;margin-bottom:4px;}
+
+/* stats row */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line);padding-top:20px;margin-top:40px;}
+.stats>div{display:flex;gap:14px;align-items:flex-start;padding-right:16px;}
+.stats>div+div{border-left:1px solid var(--line);padding-left:20px;}
+.stats .n{font-family:var(--serif);font-size:54px;color:var(--navy);line-height:.95;}
+.stats .t{font-size:19px;color:var(--gray);line-height:1.3;}
+
+/* dark title / closing slides */
+.dark{color:#fff;}
+.dark h1{color:#fff;font-size:64px;line-height:1.12;font-weight:600;}
+.dark .kicker{color:var(--gold);}
+.dark .goldrule{width:120px;height:2px;background:var(--gold);margin:30px 0;}
+.dark .who{font-size:30px;font-weight:600;}
+.dark .aff{font-size:22px;color:rgba(255,255,255,.75);line-height:1.45;}
+.dark .date{font-size:18px;color:rgba(255,255,255,.55);margin-top:26px;}
+.dark ul li{color:rgba(255,255,255,.9);} .dark ul li::before{background:var(--gold);}
+
+/* footer */
+#footer{position:fixed;left:72px;right:72px;bottom:18px;display:flex;justify-content:space-between;font-size:14px;color:var(--mid);border-top:1px solid var(--line);padding-top:6px;z-index:20;pointer-events:none;}
+.hide-footer #footer{display:none;}
+.reveal .slide-number{background:transparent;color:var(--mid);font-family:var(--sans);font-size:14px;right:72px;bottom:22px;}
+
+/* KaTeX sizing */
+.reveal .katex{font-size:1.02em;}
+.reveal .katex-display{margin:.35em 0;text-align:left;}
+.panel .katex-display>.katex{text-align:left;}
+
+/* ---------- SVG figure animation primitives ---------- */
+svg text{font-family:var(--sans);}
+.draw{stroke-dasharray:1;stroke-dashoffset:1;}
+section.present .draw.auto{animation:draw var(--dur,1.6s) ease-in-out var(--delay,0s) forwards;}
+.fragment.visible .draw,.fragment.visible.draw{animation:draw var(--dur,1.6s) ease-in-out var(--delay,0s) forwards;}
+@keyframes draw{to{stroke-dashoffset:0;}}
+.fadein{opacity:0;}
+section.present .fadein.auto{animation:fade .8s ease var(--delay,0s) forwards;}
+@keyframes fade{to{opacity:1;}}
+.reveal .slides section .fragment{transition:opacity .5s ease;}
+@media print{#footer{display:none;}}
+.reveal .progress{color:var(--gold);height:3px;}
+#footer{font-family:var(--sans);}
+.reveal table.cmp.left td,.reveal table.cmp.left th{text-align:left;}
+html.print-pdf .draw{stroke-dashoffset:0!important;animation:none!important;}
+html.print-pdf .fadein{opacity:1!important;}
