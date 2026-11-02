@@ -120,3 +120,6 @@ section.present .fadein.auto{animation:fade .8s ease var(--delay,0s) forwards;}
 .reveal table.cmp.left td,.reveal table.cmp.left th{text-align:left;}
 html.print-pdf .draw{stroke-dashoffset:0!important;animation:none!important;}
 html.print-pdf .fadein{opacity:1!important;}
+.flow{animation:flow 1.6s linear infinite;}
+@keyframes flow{to{stroke-dashoffset:-32;}}
+html.print-pdf .flow,.static .flow{animation:none;}
