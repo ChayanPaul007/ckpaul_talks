@@ -28,7 +28,13 @@
     o.push(pts[pts.length - 1]); return o;
   }
   const map = (pts, X, Y) => pts.map(p => [X(p[0]), Y(p[1])]);
-  const at = (pts, u) => pts[Math.max(0, Math.min(pts.length - 1, Math.round(u * (pts.length - 1))))];
+  // time-uniform point (index-based, interpolated) and the matching arc-length fraction,
+  // so a pathLength=1 stroke revealed to arcAt(pts,u) ends exactly at at(pts,u)
+  const ALEN = new WeakMap();
+  const cum = (pts) => { let L = ALEN.get(pts); if (!L) { L = [0]; for (let i = 1; i < pts.length; i++) L.push(L[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1])); ALEN.set(pts, L); } return L; };
+  const idx = (pts, u) => { const x = Math.max(0, Math.min(1, u)) * (pts.length - 1), i = Math.min(Math.floor(x), pts.length - 2); return [i, x - i]; };
+  const at = (pts, u) => { const [i, r] = idx(pts, u); return [pts[i][0] + r * (pts[i + 1][0] - pts[i][0]), pts[i][1] + r * (pts[i + 1][1] - pts[i][1])]; };
+  const arcAt = (pts, u) => { const L = cum(pts), [i, r] = idx(pts, u); return (L[i] + r * (L[i + 1] - L[i])) / L[L.length - 1]; };
   const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
   const ease = (x) => x < .5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2;
   const txt = (x, y, s, o = {}) => `<text ${o.id ? `id="${o.id}"` : ''} x="${f(x)}" y="${f(y)}" font-size="${o.size || 17}" fill="${o.fill || C.gray}" text-anchor="${o.anchor || 'start'}" ${o.italic ? 'font-style="italic"' : ''} ${o.weight ? `font-weight="${o.weight}"` : ''} ${o.op !== undefined ? `opacity="${o.op}"` : ''}>${s}</text>`;
@@ -64,7 +70,7 @@
     s += `<rect x="${f(X(0.9) - 18)}" y="${f(cc(0.9) - 18)}" width="36" height="36" fill="none" stroke="${C.gold}" stroke-width="1.6"/>`;
     put('fig-title', svg(W, H, s, 'preserveAspectRatio="xMidYMid meet" height="100%"'));
     reg('fig-title', 8000, u => {
-      const s1 = ease(clamp(u / 0.8)); setP('ti-tr', s1); setXY('ti-dot', at(tr, s1));
+      const s1 = ease(clamp(u / 0.8)); setP('ti-tr', arcAt(tr, s1)); setXY('ti-dot', at(tr, s1));
       const o1 = $('ti-o1'), o2 = $('ti-o2');
       if (o1) o1.setAttribute('cx', f(300 + 140 * u)); if (o2) o2.setAttribute('cx', f(560 - 120 * u));
     });
@@ -86,7 +92,7 @@
       const ph = 2 * Math.PI * u * 2;
       const pe = fnPts(t => 70 - 24 * Math.sin(3.1 * t - ph), 0, 10, 240, X, y => y);
       const e = $('pe-sig'); if (e) e.setAttribute('d', poly(pe));
-      const s1 = clamp(u / 0.85); setP('ie-sig', s1); setXY('ie-dot', at(ie, s1));
+      const s1 = clamp(u / 0.85); setP('ie-sig', arcAt(ie, s1)); setXY('ie-dot', at(ie, s1));
     });
   })();
 
@@ -110,7 +116,7 @@
     const time = [0, 1.5, 3, 4.5, 6, 7.2];
     reg('fig-refshape', 7000, u => {
       const s1 = clamp(u / 0.8), sN = clamp(s1 / 0.72);
-      setP('rs-n', sN); setP('rs-s', s1);
+      setP('rs-n', arcAt(naive, sN)); setP('rs-s', arcAt(shaped, s1));
       const pn = at(naive, sN); setXY('rs-nd', pn); $('rs-nd').setAttribute('fill', pn[1] < Y(3.2) ? C.red : C.mid);
       setXY('rs-sd', at(shaped, s1));
       $('rs-nl').setAttribute('opacity', sN > .85 ? 1 : 0);
@@ -187,7 +193,7 @@
     s += `<g id="fu-k" opacity="0">${path(`M${X(6.3)},${Y(1.15)} L${X(6.6)},${Y(0.42)}`, { stroke: C.gold, w: 1.3 })}${txt(X(6.6), Y(1.25), 'contact: compliant, yet inside the funnel', { anchor: 'end' })}</g>`;
     put('fig-funnel', svg(760, 360, s));
     reg('fig-funnel', 7000, u => {
-      const s1 = clamp(u / 0.85); setP('fu-e', s1); const p = at(ep, s1); setXY('fu-d', p);
+      const s1 = clamp(u / 0.85); setP('fu-e', arcAt(ep, s1)); const p = at(ep, s1); setXY('fu-d', p);
       const c = $('fu-c'); c.setAttribute('x1', f(p[0])); c.setAttribute('x2', f(p[0]));
       $('fu-k').setAttribute('opacity', s1 > 0.6 ? 1 : 0);
     });
@@ -238,11 +244,11 @@
     const upT = cr(upP), loT = cr(loP);
     reg('fig-stt-t', 9000, u => {
       const s1 = clamp(u / 0.88), pt = at(tr, s1), t = s1 * 10;
-      setP('stt-tr', s1); setXY('stt-dot', pt);
+      setP('stt-tr', arcAt(tr, s1)); setXY('stt-dot', pt);
       const cur = $('stt-cur'); cur.setAttribute('x1', f(pt[0])); cur.setAttribute('x2', f(pt[0]));
       const sec = $('stt-sec'); sec.setAttribute('x1', f(pt[0])); sec.setAttribute('x2', f(pt[0])); sec.setAttribute('y1', f(Y(lerp(upT, t)))); sec.setAttribute('y2', f(Y(lerp(loT, t))));
       const ob = $('stt-ob');
-      if (t >= 1.5 && t <= 7.2) { ob.setAttribute('opacity', .85); ob.setAttribute('x1', f(X(t))); ob.setAttribute('x2', f(X(t))); ob.setAttribute('y1', f(Y(0.5 + 0.45 * (t - 1.5) / 0.75 * 0.75 / 1))); ob.setAttribute('y2', f(Y(1.6 + 0.45 * (t - 1.5)))); ob.setAttribute('y1', f(Y(0.5 + 0.45 * (t - 1.5)))); }
+      if (t >= 1.5 && t <= 7.2) { ob.setAttribute('opacity', .85); ob.setAttribute('x1', f(X(t))); ob.setAttribute('x2', f(X(t))); ob.setAttribute('y2', f(Y(1.6 + 0.45 * (t - 1.5)))); ob.setAttribute('y1', f(Y(0.5 + 0.45 * (t - 1.5)))); }
       else ob.setAttribute('opacity', 0);
       // arm: inverse kinematics (elbow-up) along the end-effector path
       const e = at(ee, s1), r2 = e[0] * e[0] + e[1] * e[1];
@@ -292,7 +298,7 @@
     put('fig-stab', svg(760, 370, s));
     reg('fig-stab', 6000, u => {
       const s1 = clamp(u / 0.85);
-      setP('sb-ex', s1); setP('sb-fi', s1); setP('sb-f5', s1);
+      setP('sb-ex', arcAt(P.ex, s1)); setP('sb-fi', arcAt(P.fi, s1)); setP('sb-f5', arcAt(P.f5, s1));
       setXY('sb-dex', at(P.ex, s1)); setXY('sb-dfi', at(P.fi, s1)); setXY('sb-df5', at(P.f5, s1)); setXY('sb-d500', at(P.f500, s1));
     });
   })();
