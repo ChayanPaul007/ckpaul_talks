@@ -76,6 +76,51 @@
     });
   })();
 
+  // ================= impedance intuition: the same human push, stiff vs compliant robot =================
+  (function imp() {
+    // the hand moves into the robot by h(t); contact force = kh (h - e). A stiff position loop keeps e = 0,
+    // an impedance loop lets e obey M e'' + D e' + K e = f, so the robot yields and comes back.
+    const N = 400, kh = 9, M = 1, D = 4.2, K = 6, h = t => 0.9 * Math.exp(-(((t - 3.2) / 0.9) ** 2));
+    const E = [0], Fs = [], Fc = [];
+    let e = 0, v = 0, dt = 8 / N;
+    for (let i = 0; i <= N; i++) {
+      const t = i * dt, fc = kh * Math.max(0, h(t) - e);
+      Fs.push(kh * h(t)); Fc.push(fc); E[i] = e;
+      const a = (fc - D * v - K * e) / M; v += a * dt; e += v * dt;
+    }
+    const X = u => 60 + u * 540, lane = [100, 285], S = 95;
+    let s = '';
+    const row = (k, title, sub) => {
+      const y = lane[k];
+      return txt(0, y - 62, title, { fill: C.navy, size: 22, weight: 600 }) + txt(0, y - 38, sub, { size: 17 })
+        + path(`M${X(0)},${y} L${X(1)},${y}`, { stroke: C.mid, w: 1.4, dash: '6 6' })
+        + path('', { stroke: k ? C.navy : C.gray, w: 2.6, id: `im-tr${k}` })
+        + (k ? path('', { stroke: C.gold, w: 2, id: 'im-spr' }) : '')
+        + `<g id="im-hand${k}">${path('M0,0 L0,-30', { stroke: C.gold, w: 3 })}<path d="M0,0 l-7,-12 h14 z" fill="${C.gold}"/><circle cy="-38" r="9" fill="none" stroke="${C.gold}" stroke-width="2"/></g>`
+        + dot(`im-ee${k}`, 9, k ? C.navy : C.gray, 'stroke="#fff" stroke-width="2.5"')
+        + `<rect x="640" y="${y - 50}" width="22" height="80" fill="${C.panel}" stroke="${C.line}"/><rect id="im-bar${k}" x="640" width="22" fill="${k ? C.navy : C.red}"/>`
+        + txt(651, y + 50, 'force', { anchor: 'middle', size: 14 });
+    };
+    s += row(0, 'Stiff position control', 'robot holds the path: the push meets a wall') + row(1, 'Impedance control', 'robot behaves like a spring–damper: yields, then returns');
+    s += txt(X(1), lane[0] + 22, 'desired path', { anchor: 'end', size: 14 });
+    put('fig-imp', svg(700, 390, s));
+    reg('fig-imp', 7000, u => {
+      const i = Math.min(N, Math.round(clamp(u / 0.92) * N)), t = i * dt, x = X(i / N);
+      [0, 1].forEach(k => {
+        const y = lane[k], dy = k ? E[i] * S : 0;
+        const pts = []; for (let j = 0; j <= i; j += 4) pts.push([X(j / N), y + (k ? E[j] * S : 0)]); pts.push([x, y + dy]);
+        $(`im-tr${k}`).setAttribute('d', poly(pts)); setXY(`im-ee${k}`, [x, y + dy]);
+        // the hand comes down from above and presses on the end effector while h(t) > 0
+        const g = $(`im-hand${k}`); g.setAttribute('transform', `translate(${f(x)},${f(y + dy - 11 - 36 * (1 - h(t) / 0.9))})`); g.setAttribute('opacity', h(t) > .05 ? 1 : 0);
+        const F = (k ? Fc[i] : Fs[i]) / kh, bh = 80 * clamp(F / 0.9);
+        const b = $(`im-bar${k}`); b.setAttribute('y', f(y + 30 - bh)); b.setAttribute('height', f(bh));
+      });
+      const sp = []; const y1 = lane[1], y2 = lane[1] + E[i] * S, n = 8;
+      for (let j = 0; j <= n; j++) sp.push([x + (j % 2 ? 8 : -8) * (j > 0 && j < n), y1 + (y2 - y1) * j / n]);
+      $('im-spr').setAttribute('d', poly(sp)); $('im-spr').setAttribute('opacity', Math.abs(y2 - y1) > 4 ? 1 : 0);
+    });
+  })();
+
   // ================= PE vs IE: scrolling oscilloscope + repeated burst =================
   (function peie() {
     const X = t => 70 + t * 66; let s = '';
