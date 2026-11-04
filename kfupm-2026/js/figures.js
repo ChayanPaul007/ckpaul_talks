@@ -172,51 +172,54 @@
     });
   })();
 
-  // ================= tube MPC: block diagram + tube shrinking at T_max (looping) =================
+  // ================= tube MPC: a robot writes on a wall; Y planned ahead inside a tube that shrinks at T_max =================
   (function tubempc() {
-    const box = (x, y, w, h, t1, t2, col = C.navy, fill = '#fff') => `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill}" stroke="${col}" stroke-width="1.4"/>`
-      + txt(x + w / 2, y + h / 2 - (t2 ? 3 : -6), t1, { anchor: 'middle', fill: C.ink, size: 17, weight: t2 ? 600 : 400 })
-      + (t2 ? txt(x + w / 2, y + h / 2 + 18, t2, { anchor: 'middle', fill: C.gray, size: 16 }) : '');
-    const ar = (d, col = C.gray) => path(d, { stroke: col, w: 1.5 });
-    const head = (x, y, dir = 'r', col = C.gray) => dir === 'r' ? `<path d="M${x},${y} l-9,-4.5 v9 z" fill="${col}"/>` : `<path d="M${x},${y} l-4.5,9 h9 z" fill="${col}"/>`;
-    let s = '';
-    s += `<rect x="10" y="92" width="120" height="60" fill="#fff" stroke="${C.navy}" stroke-width="1.4"/>` + txt(70, 117, 'human /', { anchor: 'middle', fill: C.ink }) + txt(70, 139, 'environment', { anchor: 'middle', fill: C.ink });
-    s += box(175, 92, 100, 60, 'channel split', '');
-    s += box(320, 30, 250, 66, 'contact direction', 'fixed-time impedance law', C.navy, C.panel);
-    s += box(320, 148, 250, 66, 'other directions', 'tube MPC (linear QP)', C.navy, C.panel);
-    s += box(630, 92, 110, 60, 'robot', '');
-    s += box(320, 262, 250, 50, 'fixed-time estimator Θ̂', '', C.gold);
-    s += ar('M130,122 L166,122') + head(175, 122) + `<text x="152" y="110" font-size="16" fill="${C.gray}" text-anchor="middle" font-style="italic">f<tspan font-size="11" dy="4">ext</tspan></text>`;
-    s += ar('M275,122 L298,122 L298,63 L311,63') + head(320, 63) + ar('M298,122 L298,181 L311,181') + head(320, 181);
-    s += ar('M570,63 L600,63 L600,110 L621,110') + head(630, 110) + ar('M570,181 L600,181 L600,134 L621,134') + head(630, 134);
-    s += ar('M570,287 L685,287 L685,161', C.gold) + head(685, 152, 'u', C.gold);
-    s += path('M445,262 L445,223', { stroke: C.gold, w: 1.5, dash: '5 4' }) + head(445, 214, 'u', C.gold) + `<text x="456" y="245" font-size="15" fill="${C.gold}">tube shrinks after <tspan font-style="italic">T</tspan><tspan font-size="10" dy="4">max</tspan></text>`;
-    // signal pulses travelling along the wires
-    s += dot('mp-p1', 4.5, C.navy) + dot('mp-p2', 4.5, C.navy) + dot('mp-p3', 4.5, C.gold);
-    const X = t => 40 + t * 66, Y = v => 590 - v * 52, c = t => 1.2 + 0.8 * Math.sin(0.5 * t), Tm = 4;
-    const w = t => t < Tm ? 0.55 : 0.22 + 0.33 * Math.exp(-2.5 * (t - Tm));
-    let g = axes(X(0), Y(0), X(10.6), null, 't');
-    g += path(`M${X(0)},${Y(3)} L${X(10.3)},${Y(3)}`, { stroke: C.red, w: 1.8 }) + txt(X(0), Y(3) - 10, 'hard constraint', { fill: C.red });
-    g += `<path id="mp-band" fill="${C.blue}" opacity=".18"/>` + path('', { stroke: C.mid, w: 1.4, dash: '6 5', id: 'mp-tight' });
-    g += path('', { stroke: C.navy, w: 2.6, id: 'mp-traj' }) + dot('mp-dot', 6.5, C.navy, 'stroke="#fff" stroke-width="2"');
-    g += path(`M${X(Tm)},${Y(0)} L${X(Tm)},${Y(3)}`, { stroke: C.gold, w: 1.6, dash: '3 4' }) + `<text x="${X(Tm)}" y="${Y(0) + 24}" font-size="17" fill="${C.gold}" text-anchor="middle"><tspan font-style="italic">T</tspan><tspan font-size="11" dy="4">max</tspan></text>`;
-    g += txt(X(10.3), Y(3) - 10, 'tightened set 𝒱 ⊖ ℰ_b relaxes as the tube shrinks', { anchor: 'end', size: 15 });
-    put('fig-tubempc', svg(760, 640, s + g));
-    const wire1 = [[275, 122], [298, 122], [298, 63], [570, 63], [600, 63], [600, 110], [630, 110]];
-    const wire2 = [[275, 122], [298, 122], [298, 181], [570, 181], [600, 181], [600, 134], [630, 134]];
-    const wire3 = [[570, 287], [685, 287], [685, 152]];
-    const along = (wire, u) => { // point at fraction u along a polyline
-      const seg = []; let L = 0; for (let i = 1; i < wire.length; i++) { const d = Math.hypot(wire[i][0] - wire[i - 1][0], wire[i][1] - wire[i - 1][1]); seg.push(d); L += d; }
-      let r = u * L; for (let i = 1; i < wire.length; i++) { if (r <= seg[i - 1]) { const a = r / seg[i - 1]; return [wire[i - 1][0] + a * (wire[i][0] - wire[i - 1][0]), wire[i - 1][1] + a * (wire[i][1] - wire[i - 1][1])]; } r -= seg[i - 1]; }
-      return wire[wire.length - 1];
-    };
-    reg('fig-tubempc', 8000, u => {
-      const T = 10.2 * clamp(u / 0.85), n = Math.max(2, Math.round(T * 12));
-      const upper = [], lower = [], tight = [], tr = [];
-      for (let i = 0; i <= n; i++) { const t = T * i / n; upper.push([X(t), Y(c(t) + w(t))]); lower.push([X(t), Y(c(t) - w(t))]); tight.push([X(t), Y(3 - w(t) - 0.05)]); tr.push([X(t), Y(c(t))]); }
-      $('mp-band').setAttribute('d', poly(upper.concat(lower.reverse())) + 'Z');
-      $('mp-tight').setAttribute('d', poly(tight)); $('mp-traj').setAttribute('d', poly(tr)); setXY('mp-dot', tr[tr.length - 1]);
-      const k = (u * 3) % 1; setXY('mp-p1', along(wire1, k)); setXY('mp-p2', along(wire2, k)); setXY('mp-p3', along(wire3, k));
+    const Tm = 4, H = 1.6;                                     // T_max and the MPC look-ahead (in t units)
+    const ref = t => 1.9 + 1.5 * Math.sin(0.9 * t + 0.3);       // what the task asks for along Y
+    const w = t => t < Tm ? 0.6 : 0.2 + 0.4 * Math.exp(-2.5 * (t - Tm));
+    const smin = (a, b) => (a + b - Math.sqrt((a - b) ** 2 + 0.02)) / 2;
+    const y = t => smin(ref(t), 3 - w(t) - 0.05);               // plan keeps the whole tube under the limit
+    // --- scene: arm, wall (contact along X), hard limit on Y
+    const Ys = v => 300 - v * 62, B = [120, 250], L = 255, WX = 606;
+    let s = `<defs><pattern id="mp-h" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="9" stroke="${C.mid}" stroke-width="1.3"/></pattern></defs>`;
+    s += `<rect x="${WX}" y="30" width="34" height="276" fill="url(#mp-h)" stroke="${C.mid}"/>` + txt(WX + 17, 22, 'wall', { anchor: 'middle', size: 16 });
+    s += path(`M${B[0]},${Ys(3)} L${WX},${Ys(3)}`, { stroke: C.red, w: 1.8, dash: '8 6' }) + txt(B[0], Ys(3) - 10, 'hard limit on Y', { fill: C.red, size: 16 });
+    s += txt(WX - 10, 300, 'X: soft contact (fixed-time impedance)', { anchor: 'end', size: 16, fill: C.navy });
+    s += `<polyline id="mp-arm" fill="none" stroke="${C.navy}" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>`;
+    s += `<rect id="mp-sec" x="${WX - 30}" width="24" rx="12" fill="${C.blue}" opacity=".35" stroke="${C.blue}" stroke-width="1.5"/>`
+      + txt(WX - 40, 0, 'tube', { id: 'mp-tl', anchor: 'end', size: 15, fill: C.blue });
+    s += `<rect x="${B[0] - 26}" y="${B[1]}" width="52" height="14" fill="${C.navy}"/><circle cx="${B[0]}" cy="${B[1]}" r="9" fill="#fff" stroke="${C.navy}" stroke-width="3"/><circle id="mp-elb" r="7" fill="#fff" stroke="${C.navy}" stroke-width="3"/>`;
+    s += dot('mp-tip', 7, C.gold, 'stroke="#fff" stroke-width="2"') + `<path id="mp-f" fill="${C.gold}"/>`;
+    s += txt(300, 22, '', { id: 'mp-st', anchor: 'middle', size: 17, fill: C.navy, weight: 600 });
+    // --- chart: Y over time with the look-ahead
+    const X = t => 40 + t * 66, Y = v => 610 - v * 52;
+    let g = axes(X(0), Y(0), X(10.6), Y(4.1), 't', 'Y');
+    g += path(`M${X(0)},${Y(3)} L${X(10.3)},${Y(3)}`, { stroke: C.red, w: 1.8 });
+    g += path(poly(fnPts(ref, 0, 10.2, 200, X, Y)), { stroke: C.mid, w: 1.4, dash: '3 5' }) + txt(X(10.3), Y(3) - 10, 'task asks for more than is safe', { anchor: 'end', size: 15, fill: C.gray });
+    g += `<path id="mp-band" fill="${C.blue}" opacity=".18"/><path id="mp-pband" fill="${C.blue}" opacity=".10"/>`;
+    g += path('', { stroke: C.navy, w: 2.6, id: 'mp-traj' }) + path('', { stroke: C.navy, w: 2, dash: '6 5', id: 'mp-pred' });
+    g += `<line id="mp-cur" y1="${Y(0)}" y2="${Y(4)}" stroke="${C.gold}" stroke-width="1.4" stroke-dasharray="4 4"/>` + dot('mp-dot', 6.5, C.navy, 'stroke="#fff" stroke-width="2"');
+    g += path(`M${X(Tm)},${Y(0)} L${X(Tm)},${Y(3)}`, { stroke: C.gold, w: 1.4, dash: '3 4' }) + `<text x="${X(Tm)}" y="${Y(0) + 24}" font-size="17" fill="${C.gold}" text-anchor="middle"><tspan font-style="italic">T</tspan><tspan font-size="11" dy="4">max</tspan></text>`;
+    g += txt(X(0) + 20, Y(4.1) - 14, 'Y over time · solid: done · dashed: MPC look-ahead · band: tube', { size: 15 });
+    put('fig-tubempc', svg(760, 650, s + g));
+    reg('fig-tubempc', 9000, u => {
+      const T = 10.2 * clamp(u / 0.88), n = Math.max(2, Math.round(T * 12));
+      const up = [], lo = [], tr = [];
+      for (let k = 0; k <= n; k++) { const t = T * k / n; up.push([X(t), Y(y(t) + w(t))]); lo.push([X(t), Y(y(t) - w(t))]); tr.push([X(t), Y(y(t))]); }
+      $('mp-band').setAttribute('d', poly(up.concat(lo.reverse())) + 'Z'); $('mp-traj').setAttribute('d', poly(tr));
+      const T2 = Math.min(T + H, 10.3), pu = [], pl = [], pr = [];
+      for (let k = 0; k <= 20; k++) { const t = T + (T2 - T) * k / 20; pu.push([X(t), Y(y(t) + w(t))]); pl.push([X(t), Y(y(t) - w(t))]); pr.push([X(t), Y(y(t))]); }
+      $('mp-pband').setAttribute('d', poly(pu.concat(pl.reverse())) + 'Z'); $('mp-pred').setAttribute('d', poly(pr));
+      setXY('mp-dot', [X(T), Y(y(T))]); const c = $('mp-cur'); c.setAttribute('x1', f(X(T))); c.setAttribute('x2', f(X(T)));
+      // scene, in sync: the tip writes along the wall; the tube section around it is the same tube
+      const tip = [WX - 8, Ys(y(T))], dx = tip[0] - B[0], dy = tip[1] - B[1], d = Math.min(Math.hypot(dx, dy), 2 * L - 1);
+      const q = Math.atan2(dy, dx) - Math.acos(d / (2 * L)), el = [B[0] + L * Math.cos(q), B[1] + L * Math.sin(q)];
+      $('mp-arm').setAttribute('points', [B, el, tip].map(p => f(p[0]) + ',' + f(p[1])).join(' ')); setXY('mp-elb', el); setXY('mp-tip', tip);
+      const sec = $('mp-sec'); sec.setAttribute('y', f(Ys(y(T) + w(T)))); sec.setAttribute('height', f(Ys(y(T) - w(T)) - Ys(y(T) + w(T))));
+      const fl = 18 + 8 * Math.sin(5 * T);
+      $('mp-f').setAttribute('d', `M${f(tip[0] - 14 - fl)},${f(tip[1] + 24)} h${f(fl)} v-5 l12,8 l-12,8 v-5 h${f(-fl)} z`);
+      const tl = $('mp-tl'); tl.setAttribute('x', f(WX - 36)); tl.setAttribute('y', f(Ys(y(T) + w(T)) - 6));
+      $('mp-st').textContent = T < Tm ? 'Learning the parameters: wide tube, keep a margin' : 'Parameters learned at T_max: tube shrinks, more room';
     });
   })();
 
@@ -304,6 +307,68 @@
       setXY('ws-elb', pts[1]);
       $('ws-trace').setAttribute('d', poly(eeS.slice(0, Math.max(2, Math.round(s1 * (eeS.length - 1)) + 1))));
       setXY('ws-obs', P(2.62, -1.2 + 2.6 * s1));
+    });
+  })();
+
+  // ================= plan A: a person and two mobile arms carry one object, inside a tube =================
+  (function team() {
+    const ctrl = [[120, 205], [240, 222], [370, 176], [500, 132], [585, 122]];
+    const P = cr(ctrl, 30), obs = [372, 92, 30];
+    const nrm = (a, b) => { const dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy) || 1; return [dx / L, dy / L]; };
+    const half = s => 30 - 14 * s;                                   // tube half-width shrinks once the load is learned
+    let s = `<defs><pattern id="tm-h" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="8" stroke="${C.red}" stroke-width="1.2"/></pattern></defs>`;
+    const up = [], lo = [];
+    P.forEach((p, i) => { const t = nrm(P[Math.max(0, i - 1)], P[Math.min(P.length - 1, i + 1)]), h = half(i / (P.length - 1)); up.push([p[0] - t[1] * h, p[1] + t[0] * h]); lo.push([p[0] + t[1] * h, p[1] - t[0] * h]); });
+    s += `<path d="${poly(up.concat(lo.slice().reverse()))}Z" fill="${C.blue}" opacity=".14"/>` + path(poly(up), { stroke: C.blue, w: 1.3 }) + path(poly(lo), { stroke: C.blue, w: 1.3 });
+    s += `<circle cx="${obs[0]}" cy="${obs[1]}" r="${obs[2]}" fill="url(#tm-h)" stroke="${C.red}" stroke-width="1.5"/>` + txt(obs[0] + 38, obs[1] + 5, 'obstacle', { fill: C.red, size: 15 });
+    s += `<rect x="${P[P.length - 1][0] - 30}" y="${P[P.length - 1][1] - 30}" width="60" height="60" fill="none" stroke="${C.gold}" stroke-width="1.8" stroke-dasharray="5 4"/>` + txt(P[P.length - 1][0], P[P.length - 1][1] - 38, 'goal', { anchor: 'middle', size: 15 });
+    s += `<line id="tm-bar" stroke="${C.ink}" stroke-width="12" stroke-linecap="round" opacity=".8"/>`;
+    for (let k = 0; k < 2; k++) s += `<polyline id="tm-arm${k}" fill="none" stroke="${C.navy}" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>`
+      + `<g id="tm-base${k}"><rect x="-26" y="-12" width="52" height="24" rx="5" fill="${C.navy}"/><circle cx="-15" cy="13" r="5" fill="${C.ink}"/><circle cx="15" cy="13" r="5" fill="${C.ink}"/></g>`;
+    s += `<g id="tm-hum"><circle r="13" fill="#fff" stroke="${C.gold}" stroke-width="3"/><circle cy="-22" r="8" fill="${C.gold}"/></g><path id="tm-push" fill="${C.gold}"/>`;
+    s += txt(10, 22, '', { id: 'tm-st', size: 16, fill: C.navy, weight: 600 });
+    s += txt(10, 292, 'human leads · arms yield, but stay inside the tube', { size: 15 });
+    put('fig-team', svg(700, 300, s));
+    reg('fig-team', 9000, u => {
+      const sp = clamp(u / 0.9), i = Math.min(P.length - 2, Math.floor(sp * (P.length - 1))), c0 = at(P, sp);
+      const t = nrm(P[i], P[i + 1]), push = 16 * Math.exp(-(((sp - 0.42) / 0.07) ** 2));        // the human's push, absorbed inside the tube
+      const c = [c0[0] - t[1] * push, c0[1] + t[0] * push];
+      const end = k => [c[0] + t[0] * k, c[1] + t[1] * k];
+      const a = end(-85), b = end(85); const bar = $('tm-bar');
+      bar.setAttribute('x1', f(a[0])); bar.setAttribute('y1', f(a[1])); bar.setAttribute('x2', f(b[0])); bar.setAttribute('y2', f(b[1]));
+      const hp = end(-104); $('tm-hum').setAttribute('transform', `translate(${f(hp[0])},${f(hp[1])})`);
+      $('tm-push').setAttribute('d', push > 2 ? `M${f(hp[0] - 6)},${f(hp[1] + 18)} l0,${f(-push - 6)} l-6,8 m6,-8 l6,8` : '');
+      $('tm-push').setAttribute('stroke', C.gold); $('tm-push').setAttribute('stroke-width', 3); $('tm-push').setAttribute('fill', 'none');
+      [-5, 70].forEach((off, k) => {
+        const g = end(off), base = [g[0] - 22, 270], L = 95, dx = g[0] - base[0], dy = g[1] - base[1], d = Math.min(Math.hypot(dx, dy), 2 * L - 1);
+        const q = Math.atan2(dy, dx) - Math.acos(d / (2 * L)), el = [base[0] + L * Math.cos(q), base[1] + L * Math.sin(q)];
+        $(`tm-arm${k}`).setAttribute('points', [base, el, g].map(p => f(p[0]) + ',' + f(p[1])).join(' '));
+        $(`tm-base${k}`).setAttribute('transform', `translate(${f(base[0])},${f(base[1] + 10)})`);
+      });
+      $('tm-st').textContent = sp < 0.3 ? 'Load: learning its mass (fixed time)…' : 'Load learned · tube shrinks';
+    });
+  })();
+
+  // ================= plan B: an aerial swarm through a gap, every drone in its own tube =================
+  (function swarm() {
+    const off = [[0, 0], [-1, -0.9], [-1, 0.9], [-2, -1.8], [-2, 1.8]];          // V formation
+    const r = s => 34 - 20 * Math.exp(-(((s - 0.5) / 0.13) ** 2));                 // squeeze through the gap
+    const pos = (k, s) => [90 + 520 * s + off[k][0] * r(s), 150 + off[k][1] * r(s)];
+    let s = `<defs><pattern id="sw-h" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="8" stroke="${C.red}" stroke-width="1.2"/></pattern></defs>`;
+    s += `<rect x="330" y="20" width="40" height="88" fill="url(#sw-h)" stroke="${C.red}" stroke-width="1.5"/><rect x="330" y="192" width="40" height="88" fill="url(#sw-h)" stroke="${C.red}" stroke-width="1.5"/>`;
+    s += `<rect x="590" y="96" width="96" height="108" fill="none" stroke="${C.gold}" stroke-width="1.8" stroke-dasharray="5 4"/>` + txt(638, 90, 'target by T', { anchor: 'middle', size: 15 });
+    for (let k = 0; k < off.length; k++) {
+      const pts = []; for (let i = 0; i <= 80; i++) pts.push(pos(k, i / 80 * 0.92));
+      s += path(poly(pts), { stroke: C.blue, w: 13, op: .16 }) + path(poly(pts), { stroke: C.blue, w: 1, op: .5, dash: '3 5' });
+      s += `<g id="sw-d${k}">${[[-8, -8], [8, -8], [-8, 8], [8, 8]].map(p => `<circle cx="${p[0]}" cy="${p[1]}" r="5" fill="none" stroke="${k ? C.navy : C.gold}" stroke-width="1.8"/>`).join('')}`
+        + `<path d="M-8,-8 L8,8 M8,-8 L-8,8" stroke="${k ? C.navy : C.gold}" stroke-width="2.4"/></g>`;
+    }
+    s += txt(10, 22, 'Each drone flies inside its own tube', { size: 16, fill: C.navy, weight: 600 });
+    s += txt(10, 292, 'tubes never overlap → no collisions, target reached on time', { size: 15 });
+    put('fig-swarm', svg(700, 300, s));
+    reg('fig-swarm', 8000, u => {
+      const sp = clamp(u / 0.9) * 0.92;
+      off.forEach((_, k) => { const p = pos(k, sp); $(`sw-d${k}`).setAttribute('transform', `translate(${f(p[0])},${f(p[1])})`); });
     });
   })();
 
